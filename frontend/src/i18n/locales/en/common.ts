@@ -246,6 +246,9 @@ export default {
     passwordRequired: 'Password is required',
     passwordMinLength: 'Password must be at least 6 characters',
     loginFailed: 'Login failed. Please check your credentials and try again.',
+    mainSiteSignIn: 'Sign in with the main site account',
+    mainSiteSigningIn: 'Syncing main-site account...',
+    mainSiteLoginFailed: 'Main-site login failed. Sign in to the TUTU main site first and try again.',
     errors: {
       USER_NOT_ACTIVE: 'Account has been disabled.',
     },

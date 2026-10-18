@@ -264,6 +264,24 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
+   * Login by exchanging an ai-basic main-site token (or the shared HttpOnly
+   * main-site cookie when no token is supplied).
+   */
+  async function loginWithMainSite(accessToken?: string): Promise<LoginResponse> {
+    try {
+      const response = await authAPI.exchangeMainSiteToken(accessToken)
+      if (isTotp2FARequired(response)) {
+        return response
+      }
+      setAuthFromResponse(response)
+      return response
+    } catch (error) {
+      clearAuth({ preservePendingAuthSession: pendingAuthSession.value !== null })
+      throw error
+    }
+  }
+
+  /**
    * Complete login with 2FA code
    * @param tempToken - Temporary token from initial login
    * @param totpCode - 6-digit TOTP code
@@ -503,6 +521,7 @@ export const useAuthStore = defineStore('auth', () => {
 
     // Actions
     login,
+    loginWithMainSite,
     loginWithPasskey,
     login2FA,
     register,

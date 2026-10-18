@@ -82,6 +82,7 @@ type Config struct {
 	WeChat                  WeChatConnectConfig           `mapstructure:"wechat_connect"`
 	OIDC                    OIDCConnectConfig             `mapstructure:"oidc_connect"`
 	DingTalk                DingTalkConnectConfig         `mapstructure:"dingtalk_connect"`
+	MainSite                MainSiteAuthConfig            `mapstructure:"main_site"`
 	GitHubOAuth             EmailOAuthProviderConfig      `mapstructure:"github_oauth"`
 	GoogleOAuth             EmailOAuthProviderConfig      `mapstructure:"google_oauth"`
 	Default                 DefaultConfig                 `mapstructure:"default"`
@@ -408,6 +409,15 @@ type DingTalkConnectConfig struct {
 	EnableAttributeSync          bool     `mapstructure:"enable_attribute_sync"`
 	AttributeSyncFields          []string `mapstructure:"attribute_sync_fields"`
 	AttributeSyncOverwritePolicy string   `mapstructure:"attribute_sync_overwrite_policy"`
+}
+
+// MainSiteAuthConfig integrates sub2api login with the ai-basic main site.
+// The main site remains the source of truth for identity and profile data.
+type MainSiteAuthConfig struct {
+	Enabled        bool   `mapstructure:"enabled"`
+	BaseURL        string `mapstructure:"base_url"`
+	UserInfoPath   string `mapstructure:"user_info_path"`
+	TimeoutSeconds int    `mapstructure:"timeout_seconds"`
 }
 
 type EmailOAuthProviderConfig struct {
@@ -2193,6 +2203,10 @@ func setDefaults() {
 	viper.SetDefault("oidc_connect.userinfo_email_path", "")
 	viper.SetDefault("oidc_connect.userinfo_id_path", "")
 	viper.SetDefault("oidc_connect.userinfo_username_path", "")
+	viper.SetDefault("main_site.enabled", false)
+	viper.SetDefault("main_site.base_url", "")
+	viper.SetDefault("main_site.user_info_path", "/api/auth/me")
+	viper.SetDefault("main_site.timeout_seconds", 5)
 
 	// DingTalk Connect OAuth 登录
 	viper.SetDefault("dingtalk_connect.enabled", false)
@@ -2860,6 +2874,17 @@ func (c *Config) Validate() error {
 			return fmt.Errorf("server.frontend_url invalid: must not include userinfo")
 		}
 		warnIfInsecureURL("server.frontend_url", c.Server.FrontendURL)
+	}
+	if c.MainSite.Enabled {
+		if err := ValidateAbsoluteHTTPURL(c.MainSite.BaseURL); err != nil {
+			return fmt.Errorf("main_site.base_url invalid: %w", err)
+		}
+		if c.MainSite.TimeoutSeconds < 1 || c.MainSite.TimeoutSeconds > 30 {
+			return fmt.Errorf("main_site.timeout_seconds must be between 1 and 30")
+		}
+		if !strings.HasPrefix(strings.TrimSpace(c.MainSite.UserInfoPath), "/") {
+			return fmt.Errorf("main_site.user_info_path must start with /")
+		}
 	}
 	if c.WebAuthn.Enabled {
 		c.WebAuthn.RPDisplayName = strings.TrimSpace(c.WebAuthn.RPDisplayName)

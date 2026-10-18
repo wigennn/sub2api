@@ -4,8 +4,10 @@ import App from './App.vue'
 import router from './router'
 import i18n, { initI18n } from './i18n'
 import { useAppStore } from '@/stores/app'
+import { useAuthStore } from '@/stores/auth'
 import { updateFavicon } from '@/utils/branding'
 import { isIOSDevice } from '@/utils/device'
+import { initMainSiteAuth } from '@/utils/mainSiteAuth'
 import './style.css'
 
 function initIOSViewportZoomFix() {
@@ -43,14 +45,15 @@ async function bootstrap() {
   // This must happen after pinia is installed but before router and i18n
   const appStore = useAppStore()
   appStore.initFromInjectedConfig()
+  const authStore = useAuthStore()
+  await initI18n()
+  await initMainSiteAuth(authStore)
 
   // Set document title immediately after config is loaded
   if (appStore.siteName && appStore.siteName !== 'Sub2API') {
     document.title = `${appStore.siteName} - AI API Gateway`
   }
   updateFavicon(appStore.siteLogo)
-
-  await initI18n()
 
   app.use(router)
   app.use(i18n)

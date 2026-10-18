@@ -139,6 +139,25 @@
           @open="showAgreementModal = true"
         />
 
+        <button
+          type="button"
+          class="btn btn-secondary w-full"
+          :disabled="authActionDisabled || mainSiteLoading"
+          @click="handleMainSiteLogin"
+        >
+          <svg
+            v-if="mainSiteLoading"
+            class="-ml-1 mr-2 h-4 w-4 animate-spin"
+            fill="none"
+            viewBox="0 0 24 24"
+          >
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          <Icon v-else name="link" size="md" class="mr-2" />
+          {{ mainSiteLoading ? t('auth.mainSiteSigningIn') : t('auth.mainSiteSignIn') }}
+        </button>
+
         <div v-if="showPasskeyLogin || showOAuthLogin" class="space-y-3 pt-1">
           <div class="flex items-center gap-3">
             <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
@@ -251,6 +270,7 @@ import type {
 } from '@/types'
 import { extractI18nErrorMessage } from '@/utils/apiError'
 import { clearAllAffiliateReferralCodes } from '@/utils/oauthAffiliate'
+import { consumeMainSiteTwoFactorChallenge } from '@/utils/mainSiteAuth'
 
 const { t } = useI18n()
 const LOGIN_AGREEMENT_STORAGE_KEY = 'sub2api_login_agreement_consent'
@@ -264,6 +284,7 @@ const appStore = useAppStore()
 // ==================== State ====================
 
 const isLoading = ref<boolean>(false)
+const mainSiteLoading = ref<boolean>(false)
 const passkeyLoading = ref<boolean>(false)
 const errorMessage = ref<string>('')
 const showPassword = ref<boolean>(false)
@@ -345,7 +366,7 @@ const agreementGateActive = computed(
 )
 
 const authActionDisabled = computed(
-  () => isLoading.value || passkeyLoading.value || !publicSettingsLoaded.value || agreementGateActive.value
+  () => isLoading.value || mainSiteLoading.value || passkeyLoading.value || !publicSettingsLoaded.value || agreementGateActive.value
 )
 
 const showPasskeyLogin = computed(
@@ -410,6 +431,13 @@ onMounted(async () => {
     agreementAccepted.value = true
   } finally {
     publicSettingsLoaded.value = true
+  }
+
+  const mainSiteChallenge = consumeMainSiteTwoFactorChallenge()
+  if (mainSiteChallenge?.temp_token) {
+    totpTempToken.value = mainSiteChallenge.temp_token
+    totpUserEmailMasked.value = mainSiteChallenge.user_email_masked || ''
+    show2FAModal.value = true
   }
 })
 
@@ -559,6 +587,39 @@ function validateForm(): boolean {
 }
 
 // ==================== Form Handlers ====================
+
+async function handleMainSiteLogin(): Promise<void> {
+  errorMessage.value = ''
+  if (agreementGateActive.value) {
+    appStore.showWarning(t('legal.loginAgreementPrompt.loginRequiredWarning'))
+    if (loginAgreementMode.value !== 'checkbox') {
+      showAgreementModal.value = true
+    }
+    return
+  }
+
+  mainSiteLoading.value = true
+  try {
+    const response = await authStore.loginWithMainSite()
+    if (isTotp2FARequired(response)) {
+      const totpResponse = response as TotpLoginResponse
+      totpTempToken.value = totpResponse.temp_token || ''
+      totpUserEmailMasked.value = totpResponse.user_email_masked || ''
+      show2FAModal.value = true
+      return
+    }
+
+    clearAllAffiliateReferralCodes()
+    appStore.showSuccess(t('auth.loginSuccess'))
+    const redirectTo = (router.currentRoute.value.query.redirect as string) || '/dashboard'
+    await router.push(redirectTo)
+  } catch (error: unknown) {
+    errorMessage.value = extractI18nErrorMessage(error, t, 'auth.errors', t('auth.mainSiteLoginFailed'))
+    appStore.showError(errorMessage.value)
+  } finally {
+    mainSiteLoading.value = false
+  }
+}
 
 async function handleLogin(): Promise<void> {
   // Clear previous error

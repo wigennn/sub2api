@@ -168,6 +168,31 @@ export async function login2FA(request: TotpLogin2FARequest): Promise<AuthRespon
 }
 
 /**
+ * Exchange an ai-basic main-site token for a local sub2api session.
+ * When accessToken is omitted, the backend also accepts the shared main-site
+ * HttpOnly cookie.
+ */
+export async function exchangeMainSiteToken(accessToken?: string): Promise<LoginResponse> {
+  const { data } = await apiClient.post<LoginResponse>(
+    '/auth/main-site/exchange',
+    accessToken ? { access_token: accessToken } : {}
+  )
+
+  if (!isTotp2FARequired(data)) {
+    setAuthToken(data.access_token)
+    if (data.refresh_token) {
+      setRefreshToken(data.refresh_token)
+    }
+    if (data.expires_in) {
+      setTokenExpiresAt(data.expires_in)
+    }
+    localStorage.setItem('auth_user', JSON.stringify(data.user))
+  }
+
+  return data
+}
+
+/**
  * User registration
  * @param userData - Registration data (username, email, password)
  * @returns Authentication response with token and user data
@@ -681,6 +706,7 @@ export async function exchangePendingOAuthCompletion(
 export const authAPI = {
   login,
   login2FA,
+  exchangeMainSiteToken,
   isTotp2FARequired,
   register,
   getCurrentUser,

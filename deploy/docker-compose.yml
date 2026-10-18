@@ -99,6 +99,14 @@ services:
       - JWT_EXPIRE_HOUR=${JWT_EXPIRE_HOUR:-24}
 
       # =======================================================================
+      # ai-basic Main-site Login
+      # =======================================================================
+      - MAIN_SITE_ENABLED=${MAIN_SITE_ENABLED:-false}
+      - MAIN_SITE_BASE_URL=${MAIN_SITE_BASE_URL:-http://host.docker.internal:8080}
+      - MAIN_SITE_USER_INFO_PATH=${MAIN_SITE_USER_INFO_PATH:-/api/auth/me}
+      - MAIN_SITE_TIMEOUT_SECONDS=${MAIN_SITE_TIMEOUT_SECONDS:-5}
+
+      # =======================================================================
       # Setup Configuration
       # =======================================================================
       - SETUP_MIGRATION_TIMEOUT_SECONDS=${SETUP_MIGRATION_TIMEOUT_SECONDS:-0}

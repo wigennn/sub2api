@@ -1020,6 +1020,19 @@ oidc_connect:
   userinfo_username_path: ""
 
 # =============================================================================
+# Main Site Login (ai-basic)
+# 主站账号登录（ai-basic）
+# =============================================================================
+main_site:
+  enabled: false
+  # ai-basic API origin, without the endpoint path.
+  # ai-basic API 根地址，不包含接口路径。
+  base_url: "http://localhost:8080"
+  # ai-basic endpoint returning ApiResponse<UserResponse> for the bearer token.
+  user_info_path: "/api/auth/me"
+  timeout_seconds: 5
+
+# =============================================================================
 # Default Settings
 # 默认设置
 # =============================================================================
