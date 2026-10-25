@@ -24,6 +24,8 @@ const publicSettings = {
   oidc_oauth_provider_name: 'OIDC',
   github_oauth_enabled: false,
   google_oauth_enabled: false,
+  main_site_login_enabled: false,
+  main_site_only_login: false,
   password_reset_enabled: false,
   passkey_enabled: false,
   login_agreement_enabled: false,
@@ -113,6 +115,23 @@ describe('LoginView registration entry', () => {
     const wrapper = mountLogin()
     await flushPromises()
 
+    expect(wrapper.text()).not.toContain('auth.signUp')
+  })
+
+  it('renders only the main-site login when exclusive sign-in is enabled', async () => {
+    getPublicSettingsMock.mockResolvedValueOnce({
+      ...publicSettings,
+      registration_enabled: false,
+      main_site_login_enabled: true,
+      main_site_only_login: true
+    })
+
+    const wrapper = mountLogin()
+    await flushPromises()
+
+    expect(wrapper.find('#email').exists()).toBe(false)
+    expect(wrapper.text()).toContain('auth.mainSiteOnlyLoginHint')
+    expect(wrapper.text()).toContain('auth.mainSiteSignIn')
     expect(wrapper.text()).not.toContain('auth.signUp')
   })
 })

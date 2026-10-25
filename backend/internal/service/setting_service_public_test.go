@@ -120,6 +120,31 @@ func TestSettingService_GetPublicSettings_ExposesMainSiteLoginEnabled(t *testing
 	require.False(t, disabled.MainSiteLoginEnabled)
 }
 
+func TestSettingService_GetPublicSettings_MainSiteOnlyLoginDisablesRegistration(t *testing.T) {
+	repo := &settingPublicRepoStub{values: map[string]string{
+		SettingKeyRegistrationEnabled: "true",
+	}}
+	svc := NewSettingService(repo, &config.Config{
+		MainSite: config.MainSiteAuthConfig{
+			Enabled:   true,
+			OnlyLogin: true,
+			BaseURL:   "https://main.example.com",
+		},
+	})
+
+	settings, err := svc.GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.True(t, settings.MainSiteLoginEnabled)
+	require.True(t, settings.MainSiteOnlyLogin)
+	require.False(t, settings.RegistrationEnabled)
+
+	disabled, err := NewSettingService(repo, &config.Config{}).
+		GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.False(t, disabled.MainSiteOnlyLogin)
+	require.True(t, disabled.RegistrationEnabled)
+}
+
 func TestSettingService_ChannelMonitorHideThroughputDefaultsToPrivate(t *testing.T) {
 	missing := NewSettingService(&settingPublicRepoStub{values: map[string]string{}}, &config.Config{}).GetChannelMonitorRuntime(context.Background())
 	require.True(t, missing.HideThroughput)

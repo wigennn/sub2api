@@ -11,7 +11,11 @@
         </p>
       </div>
       <!-- Login Form -->
-      <form @submit.prevent="handleLogin" class="space-y-5">
+      <form
+        v-if="publicSettingsLoaded && !mainSiteOnlyLogin"
+        @submit.prevent="handleLogin"
+        class="space-y-5"
+      >
         <!-- Email Input -->
         <div>
           <label for="email" class="input-label">
@@ -127,93 +131,101 @@
           {{ isLoading ? t('auth.signingIn') : t('auth.signIn') }}
         </button>
 
-        <LoginAgreementPrompt
-          v-if="loginAgreementEnabled"
-          :accepted="agreementAccepted"
-          :documents="loginAgreementDocuments"
-          :mode="loginAgreementMode"
-          :updated-at="loginAgreementUpdatedAt"
-          :visible="showAgreementModal"
-          @accept="acceptLoginAgreement"
-          @reject="rejectLoginAgreement"
-          @open="showAgreementModal = true"
-        />
+      </form>
+
+      <p
+        v-if="mainSiteOnlyLogin"
+        class="rounded-lg border border-primary-200 bg-primary-50 px-4 py-3 text-sm text-primary-700 dark:border-primary-800/60 dark:bg-primary-900/20 dark:text-primary-300"
+      >
+        {{ t('auth.mainSiteOnlyLoginHint') }}
+      </p>
+
+      <LoginAgreementPrompt
+        v-if="loginAgreementEnabled"
+        :accepted="agreementAccepted"
+        :documents="loginAgreementDocuments"
+        :mode="loginAgreementMode"
+        :updated-at="loginAgreementUpdatedAt"
+        :visible="showAgreementModal"
+        @accept="acceptLoginAgreement"
+        @reject="rejectLoginAgreement"
+        @open="showAgreementModal = true"
+      />
+
+      <button
+        v-if="mainSiteLoginEnabled"
+        type="button"
+        :class="mainSiteOnlyLogin ? 'btn btn-primary w-full' : 'btn btn-secondary w-full'"
+        :disabled="authActionDisabled || mainSiteLoading"
+        @click="handleMainSiteLogin"
+      >
+        <svg
+          v-if="mainSiteLoading"
+          class="-ml-1 mr-2 h-4 w-4 animate-spin"
+          fill="none"
+          viewBox="0 0 24 24"
+        >
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <Icon v-else name="link" size="md" class="mr-2" />
+        {{ mainSiteLoading ? t('auth.mainSiteSigningIn') : t('auth.mainSiteSignIn') }}
+      </button>
+
+      <div v-if="!mainSiteOnlyLogin && (showPasskeyLogin || showOAuthLogin)" class="space-y-3 pt-1">
+        <div class="flex items-center gap-3">
+          <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
+          <span class="text-xs text-gray-500 dark:text-dark-400">
+            {{ t('auth.oauthOrContinue') }}
+          </span>
+          <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
+        </div>
 
         <button
-          v-if="mainSiteLoginEnabled"
+          v-if="showPasskeyLogin"
           type="button"
           class="btn btn-secondary w-full"
-          :disabled="authActionDisabled || mainSiteLoading"
-          @click="handleMainSiteLogin"
+          :disabled="authActionDisabled"
+          @click="handlePasskeyLogin"
         >
-          <svg
-            v-if="mainSiteLoading"
-            class="-ml-1 mr-2 h-4 w-4 animate-spin"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
-          <Icon v-else name="link" size="md" class="mr-2" />
-          {{ mainSiteLoading ? t('auth.mainSiteSigningIn') : t('auth.mainSiteSignIn') }}
+          <Icon name="key" size="md" class="mr-2" />
+          {{ passkeyLoading ? t('auth.passkeySigningIn') : t('auth.passkeySignIn') }}
         </button>
 
-        <div v-if="showPasskeyLogin || showOAuthLogin" class="space-y-3 pt-1">
-          <div class="flex items-center gap-3">
-            <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
-            <span class="text-xs text-gray-500 dark:text-dark-400">
-              {{ t('auth.oauthOrContinue') }}
-            </span>
-            <div class="h-px flex-1 bg-gray-200 dark:bg-dark-700"></div>
-          </div>
+        <EmailOAuthButtons
+          :disabled="authActionDisabled"
+          :github-enabled="githubOAuthEnabled"
+          :google-enabled="googleOAuthEnabled"
+          :show-divider="false"
+          @start="handleOAuthStart"
+        />
 
-          <button
-            v-if="showPasskeyLogin"
-            type="button"
-            class="btn btn-secondary w-full"
-            :disabled="authActionDisabled"
-            @click="handlePasskeyLogin"
-          >
-            <Icon name="key" size="md" class="mr-2" />
-            {{ passkeyLoading ? t('auth.passkeySigningIn') : t('auth.passkeySignIn') }}
-          </button>
-
-          <EmailOAuthButtons
-            :disabled="authActionDisabled"
-            :github-enabled="githubOAuthEnabled"
-            :google-enabled="googleOAuthEnabled"
-            :show-divider="false"
-            @start="handleOAuthStart"
-          />
-
-          <LinuxDoOAuthSection
-            v-if="linuxdoOAuthEnabled"
-            :disabled="authActionDisabled"
-            :show-divider="false"
-            @start="handleOAuthStart"
-          />
-          <DingTalkOAuthSection
-            v-if="dingtalkOAuthEnabled"
-            :disabled="authActionDisabled"
-            :show-divider="false"
-            @start="handleOAuthStart"
-          />
-          <WechatOAuthSection
-            v-if="wechatOAuthEnabled"
-            :disabled="authActionDisabled"
-            :show-divider="false"
-            @start="handleOAuthStart"
-          />
-          <OidcOAuthSection
-            v-if="oidcOAuthEnabled"
-            :disabled="authActionDisabled"
-            :provider-name="oidcOAuthProviderName"
-            :show-divider="false"
-            @start="handleOAuthStart"
-          />
-        </div>
-      </form>
+        <LinuxDoOAuthSection
+          v-if="linuxdoOAuthEnabled"
+          :disabled="authActionDisabled"
+          :show-divider="false"
+          @start="handleOAuthStart"
+        />
+        <DingTalkOAuthSection
+          v-if="dingtalkOAuthEnabled"
+          :disabled="authActionDisabled"
+          :show-divider="false"
+          @start="handleOAuthStart"
+        />
+        <WechatOAuthSection
+          v-if="wechatOAuthEnabled"
+          :disabled="authActionDisabled"
+          :show-divider="false"
+          @start="handleOAuthStart"
+        />
+        <OidcOAuthSection
+          v-if="oidcOAuthEnabled"
+          :disabled="authActionDisabled"
+          :provider-name="oidcOAuthProviderName"
+          :show-divider="false"
+          @start="handleOAuthStart"
+        />
+      </div>
     </div>
 
     <!-- Footer -->
@@ -271,7 +283,7 @@ import type {
 } from '@/types'
 import { extractI18nErrorMessage } from '@/utils/apiError'
 import { clearAllAffiliateReferralCodes } from '@/utils/oauthAffiliate'
-import { consumeMainSiteTwoFactorChallenge } from '@/utils/mainSiteAuth'
+import { consumeMainSiteTwoFactorChallenge, startMainSiteLogin } from '@/utils/mainSiteAuth'
 
 const { t } = useI18n()
 const LOGIN_AGREEMENT_STORAGE_KEY = 'sub2api_login_agreement_consent'
@@ -286,6 +298,7 @@ const appStore = useAppStore()
 
 const isLoading = ref<boolean>(false)
 const mainSiteLoading = ref<boolean>(false)
+const mainSiteOnlyLogin = ref<boolean>(false)
 const passkeyLoading = ref<boolean>(false)
 const errorMessage = ref<string>('')
 const showPassword = ref<boolean>(false)
@@ -424,6 +437,7 @@ onMounted(async () => {
     githubOAuthEnabled.value = settings.github_oauth_enabled
     googleOAuthEnabled.value = settings.google_oauth_enabled
     mainSiteLoginEnabled.value = settings.main_site_login_enabled === true
+    mainSiteOnlyLogin.value = settings.main_site_only_login === true
     backendModeEnabled.value = settings.backend_mode_enabled
     passwordResetEnabled.value = settings.password_reset_enabled
     passkeyEnabled.value = settings.passkey_enabled === true
@@ -431,6 +445,7 @@ onMounted(async () => {
   } catch (error) {
     console.error('Failed to load public settings:', error)
     mainSiteLoginEnabled.value = appStore.cachedPublicSettings?.main_site_login_enabled === true
+    mainSiteOnlyLogin.value = appStore.cachedPublicSettings?.main_site_only_login === true
     loginAgreementEnabled.value = false
     agreementAccepted.value = true
   } finally {
@@ -604,19 +619,7 @@ async function handleMainSiteLogin(): Promise<void> {
 
   mainSiteLoading.value = true
   try {
-    const response = await authStore.loginWithMainSite()
-    if (isTotp2FARequired(response)) {
-      const totpResponse = response as TotpLoginResponse
-      totpTempToken.value = totpResponse.temp_token || ''
-      totpUserEmailMasked.value = totpResponse.user_email_masked || ''
-      show2FAModal.value = true
-      return
-    }
-
-    clearAllAffiliateReferralCodes()
-    appStore.showSuccess(t('auth.loginSuccess'))
-    const redirectTo = (router.currentRoute.value.query.redirect as string) || '/dashboard'
-    await router.push(redirectTo)
+    startMainSiteLogin()
   } catch (error: unknown) {
     errorMessage.value = extractI18nErrorMessage(error, t, 'auth.errors', t('auth.mainSiteLoginFailed'))
     appStore.showError(errorMessage.value)

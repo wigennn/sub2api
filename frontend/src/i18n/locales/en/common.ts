@@ -249,6 +249,7 @@ export default {
     mainSiteSignIn: 'Sign in with the main site account',
     mainSiteSigningIn: 'Syncing main-site account...',
     mainSiteLoginFailed: 'Main-site login failed. Sign in to the TUTU main site first and try again.',
+    mainSiteOnlyLoginHint: 'Use your TUTU main-site account. Local account registration is not available.',
     errors: {
       USER_NOT_ACTIVE: 'Account has been disabled.',
     },

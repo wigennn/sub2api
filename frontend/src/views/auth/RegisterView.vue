@@ -563,6 +563,10 @@ onMounted(async () => {
 
   try {
     const settings = await getPublicSettings()
+    if (settings.main_site_only_login === true) {
+      await router.replace('/login')
+      return
+    }
     registrationEnabled.value = settings.registration_enabled
     emailVerifyEnabled.value = settings.email_verify_enabled
     promoCodeEnabled.value = settings.promo_code_enabled

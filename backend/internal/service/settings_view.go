@@ -382,6 +382,7 @@ type PublicSettings struct {
 	GitHubOAuthEnabled       bool
 	GoogleOAuthEnabled       bool
 	MainSiteLoginEnabled     bool
+	MainSiteOnlyLogin        bool
 	Version                  string
 
 	BalanceLowNotifyEnabled     bool

@@ -415,6 +415,7 @@ type DingTalkConnectConfig struct {
 // The main site remains the source of truth for identity and profile data.
 type MainSiteAuthConfig struct {
 	Enabled        bool   `mapstructure:"enabled"`
+	OnlyLogin      bool   `mapstructure:"only_login"`
 	BaseURL        string `mapstructure:"base_url"`
 	UserInfoPath   string `mapstructure:"user_info_path"`
 	TimeoutSeconds int    `mapstructure:"timeout_seconds"`
@@ -2204,6 +2205,7 @@ func setDefaults() {
 	viper.SetDefault("oidc_connect.userinfo_id_path", "")
 	viper.SetDefault("oidc_connect.userinfo_username_path", "")
 	viper.SetDefault("main_site.enabled", false)
+	viper.SetDefault("main_site.only_login", false)
 	viper.SetDefault("main_site.base_url", "")
 	viper.SetDefault("main_site.user_info_path", "/api/auth/me")
 	viper.SetDefault("main_site.timeout_seconds", 5)

@@ -249,6 +249,7 @@ export default {
     mainSiteSignIn: '使用主站账号登录',
     mainSiteSigningIn: '正在同步主站账号...',
     mainSiteLoginFailed: '主站登录失败，请先在兔兔创作主站完成登录后重试。',
+    mainSiteOnlyLoginHint: '请使用兔兔创作主站账号登录，本系统不再单独注册账号。',
     errors: {
       USER_NOT_ACTIVE: '账号已被禁用',
     },

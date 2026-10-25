@@ -293,6 +293,8 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 	if loginAgreementUpdatedAt == "" {
 		loginAgreementUpdatedAt = defaultLoginAgreementDate
 	}
+	mainSiteOnlyLogin := MainSiteOnlyLoginEnabled(s.cfg)
+	registrationEnabled := settings[SettingKeyRegistrationEnabled] == "true" && !mainSiteOnlyLogin
 
 	var balanceLowNotifyThreshold float64
 	if v, err := strconv.ParseFloat(settings[SettingKeyBalanceLowNotifyThreshold], 64); err == nil && v >= 0 {
@@ -300,7 +302,7 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 	}
 
 	return &PublicSettings{
-		RegistrationEnabled:                 settings[SettingKeyRegistrationEnabled] == "true",
+		RegistrationEnabled:                 registrationEnabled,
 		EmailVerifyEnabled:                  emailVerifyEnabled,
 		ForceEmailOnThirdPartySignup:        settings[SettingKeyForceEmailOnThirdPartySignup] == "true",
 		RegistrationEmailSuffixWhitelist:    registrationEmailSuffixWhitelist,
@@ -353,6 +355,7 @@ func (s *SettingService) GetPublicSettings(ctx context.Context) (*PublicSettings
 		GitHubOAuthEnabled:                  gitHubEnabled,
 		GoogleOAuthEnabled:                  googleEnabled,
 		MainSiteLoginEnabled:                MainSiteAuthEnabled(s.cfg),
+		MainSiteOnlyLogin:                   mainSiteOnlyLogin,
 		BalanceLowNotifyEnabled:             settings[SettingKeyBalanceLowNotifyEnabled] == "true",
 		AccountQuotaNotifyEnabled:           settings[SettingKeyAccountQuotaNotifyEnabled] == "true",
 		BalanceLowNotifyThreshold:           balanceLowNotifyThreshold,
@@ -610,6 +613,7 @@ type PublicSettingsInjectionPayload struct {
 	GitHubOAuthEnabled                  bool                     `json:"github_oauth_enabled"`
 	GoogleOAuthEnabled                  bool                     `json:"google_oauth_enabled"`
 	MainSiteLoginEnabled                bool                     `json:"main_site_login_enabled"`
+	MainSiteOnlyLogin                   bool                     `json:"main_site_only_login"`
 	BackendModeEnabled                  bool                     `json:"backend_mode_enabled"`
 	PaymentEnabled                      bool                     `json:"payment_enabled"`
 	PaymentBalanceDisabled              bool                     `json:"payment_balance_disabled"`
@@ -705,6 +709,7 @@ func (s *SettingService) GetPublicSettingsForInjection(ctx context.Context) (any
 		GitHubOAuthEnabled:                  settings.GitHubOAuthEnabled,
 		GoogleOAuthEnabled:                  settings.GoogleOAuthEnabled,
 		MainSiteLoginEnabled:                settings.MainSiteLoginEnabled,
+		MainSiteOnlyLogin:                   settings.MainSiteOnlyLogin,
 		BackendModeEnabled:                  settings.BackendModeEnabled,
 		PaymentEnabled:                      settings.PaymentEnabled,
 		PaymentBalanceDisabled:              settings.PaymentBalanceDisabled,

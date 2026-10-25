@@ -1025,8 +1025,11 @@ oidc_connect:
 # =============================================================================
 main_site:
   enabled: false
+  # Reject local registration/password/OAuth/passkey flows and use only the main-site login.
+  only_login: false
   # ai-basic API origin, without the endpoint path.
   # ai-basic API 根地址，不包含接口路径。
+  # Must also be reachable by the browser for the SSO handoff redirect.
   base_url: "http://localhost:8080"
   # ai-basic endpoint returning ApiResponse<UserResponse> for the bearer token.
   user_info_path: "/api/auth/me"

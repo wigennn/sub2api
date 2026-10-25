@@ -7,6 +7,7 @@ const {
   registerMock,
   showErrorMock,
   pushMock,
+  replaceMock,
   verifyActionMock,
   appStoreMock
 } = vi.hoisted(() => ({
@@ -14,6 +15,7 @@ const {
   registerMock: vi.fn(),
   showErrorMock: vi.fn(),
   pushMock: vi.fn(),
+  replaceMock: vi.fn(),
   verifyActionMock: vi.fn(),
   appStoreMock: {
     cachedPublicSettings: null as { promo_code_enabled?: boolean } | null,
@@ -41,7 +43,7 @@ const publicSettings = {
 }
 
 vi.mock('vue-router', () => ({
-  useRouter: () => ({ push: pushMock }),
+  useRouter: () => ({ push: pushMock, replace: replaceMock }),
   useRoute: () => ({ query: {} })
 }))
 
@@ -101,6 +103,7 @@ describe('RegisterView', () => {
     registerMock.mockReset()
     showErrorMock.mockReset()
     pushMock.mockReset()
+    replaceMock.mockReset()
     verifyActionMock.mockReset()
     appStoreMock.cachedPublicSettings = null
     sessionStorage.removeItem('register_data')
@@ -125,6 +128,20 @@ describe('RegisterView', () => {
     await flushPromises()
 
     expect(wrapper.find('#promo_code').exists()).toBe(false)
+  })
+
+  it('redirects to login when the main site is the only login provider', async () => {
+    getPublicSettingsMock.mockResolvedValueOnce({
+      ...publicSettings,
+      registration_enabled: false,
+      main_site_login_enabled: true,
+      main_site_only_login: true
+    })
+
+    mountRegister()
+    await flushPromises()
+
+    expect(replaceMock).toHaveBeenCalledWith('/login')
   })
 
   it('uses injected public settings to show an enabled promo-code field on first render', () => {

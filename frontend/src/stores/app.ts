@@ -363,6 +363,7 @@ export const useAppStore = defineStore('app', () => {
         github_oauth_enabled: false,
         google_oauth_enabled: false,
         main_site_login_enabled: false,
+        main_site_only_login: false,
         backend_mode_enabled: false,
         passkey_enabled: false,
         version: siteVersion.value,
