@@ -15,6 +15,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
+        ALPINE_MIRROR: ${ALPINE_MIRROR:-https://mirrors.aliyun.com}
         NPM_CONFIG_REGISTRY: ${NPM_CONFIG_REGISTRY:-https://registry.npmmirror.com}
         GOPROXY: ${GOPROXY:-https://goproxy.cn,direct}
     image: sub2api:local

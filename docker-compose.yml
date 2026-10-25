@@ -15,6 +15,7 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
+        ALPINE_MIRROR: ${ALPINE_MIRROR:-https://mirrors.aliyun.com}
         NPM_CONFIG_REGISTRY: ${NPM_CONFIG_REGISTRY:-https://registry.npmmirror.com}
         GOPROXY: ${GOPROXY:-https://goproxy.cn,direct}
     image: sub2api:local
@@ -27,7 +28,7 @@ services:
         soft: 100000
         hard: 100000
     ports:
-      - "${BIND_HOST:-0.0.0.0}:8070:8070"
+      - "${BIND_HOST:-0.0.0.0}:8080:8080"
     volumes:
       - sub2api_data:/app/data
     extra_hosts:
@@ -35,7 +36,7 @@ services:
     environment:
       AUTO_SETUP: "true"
       SERVER_HOST: 0.0.0.0
-      SERVER_PORT: "8070"
+      SERVER_PORT: "8080"
       SERVER_MODE: ${SERVER_MODE:-release}
       ENABLE_SERVER_TIMING: ${ENABLE_SERVER_TIMING:-false}
       RUN_MODE: ${RUN_MODE:-standard}

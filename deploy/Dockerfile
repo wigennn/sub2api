@@ -9,6 +9,8 @@
 ARG NODE_IMAGE=node:24-alpine
 ARG GOLANG_IMAGE=golang:1.27.2-alpine
 ARG ALPINE_IMAGE=alpine:3.20
+# Host only. The /alpine/vX.Y/main suffix comes from /etc/apk/repositories.
+ARG ALPINE_MIRROR=https://dl-cdn.alpinelinux.org
 ARG GOPROXY=https://goproxy.cn,direct
 ARG GOSUMDB=sum.golang.google.cn
 
@@ -82,6 +84,7 @@ RUN VERSION_VALUE="${VERSION}" && \
 # Stage 3: Final Runtime Image
 # -----------------------------------------------------------------------------
 FROM ${ALPINE_IMAGE}
+ARG ALPINE_MIRROR
 
 # Labels
 LABEL maintainer="Wei-Shaw <github.com/Wei-Shaw>"
@@ -89,11 +92,12 @@ LABEL description="Sub2API - AI API Gateway Platform"
 LABEL org.opencontainers.image.source="https://github.com/Wei-Shaw/sub2api"
 
 # Install runtime dependencies
-RUN apk add --no-cache \
-    ca-certificates \
-    tzdata \
-    curl \
-    su-exec \
+RUN sed -i "s|https://dl-cdn.alpinelinux.org|${ALPINE_MIRROR}|g; s|http://dl-cdn.alpinelinux.org|${ALPINE_MIRROR}|g" /etc/apk/repositories && \
+    apk add --no-cache \
+        ca-certificates \
+        tzdata \
+        curl \
+        su-exec \
     && rm -rf /var/cache/apk/*
 
 # Create non-root user

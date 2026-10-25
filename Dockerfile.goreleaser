@@ -7,27 +7,31 @@
 
 ARG ALPINE_IMAGE=alpine:3.21
 ARG POSTGRES_IMAGE=postgres:18-alpine
+# Host only. The /alpine/vX.Y/main suffix comes from /etc/apk/repositories.
+ARG ALPINE_MIRROR=https://dl-cdn.alpinelinux.org
 
 FROM ${POSTGRES_IMAGE} AS pg-client
 
 FROM ${ALPINE_IMAGE}
+ARG ALPINE_MIRROR
 
 LABEL maintainer="Wei-Shaw <github.com/Wei-Shaw>"
 LABEL description="Sub2API - AI API Gateway Platform"
 LABEL org.opencontainers.image.source="https://github.com/Wei-Shaw/sub2api"
 
 # Install runtime dependencies
-RUN apk add --no-cache \
-    ca-certificates \
-    tzdata \
-    curl \
-    su-exec \
-    libpq \
-    zstd-libs \
-    lz4-libs \
-    krb5-libs \
-    libldap \
-    libedit \
+RUN sed -i "s|https://dl-cdn.alpinelinux.org|${ALPINE_MIRROR}|g; s|http://dl-cdn.alpinelinux.org|${ALPINE_MIRROR}|g" /etc/apk/repositories && \
+    apk add --no-cache \
+        ca-certificates \
+        tzdata \
+        curl \
+        su-exec \
+        libpq \
+        zstd-libs \
+        lz4-libs \
+        krb5-libs \
+        libldap \
+        libedit \
     && rm -rf /var/cache/apk/*
 
 # Copy pg_dump and psql from a version-matched PostgreSQL image so backup and
