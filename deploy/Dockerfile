@@ -43,6 +43,7 @@ RUN pnpm run build
 # Stage 2: Backend Builder
 # -----------------------------------------------------------------------------
 FROM ${GOLANG_IMAGE} AS backend-builder
+ARG ALPINE_MIRROR
 
 # Build arguments for version info (set by CI)
 ARG VERSION=
@@ -55,7 +56,8 @@ ENV GOPROXY=${GOPROXY}
 ENV GOSUMDB=${GOSUMDB}
 
 # Install build dependencies
-RUN apk add --no-cache git ca-certificates tzdata
+RUN sed -i "s|https://dl-cdn.alpinelinux.org|${ALPINE_MIRROR}|g; s|http://dl-cdn.alpinelinux.org|${ALPINE_MIRROR}|g" /etc/apk/repositories && \
+    apk add --no-cache git ca-certificates tzdata
 
 WORKDIR /app/backend
 

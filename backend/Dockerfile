@@ -1,9 +1,12 @@
 FROM golang:1.27.2-alpine
 
+ARG ALPINE_MIRROR=https://dl-cdn.alpinelinux.org
+
 WORKDIR /app
 
 # 安装必要的工具
-RUN apk add --no-cache git
+RUN sed -i "s|https://dl-cdn.alpinelinux.org|${ALPINE_MIRROR}|g; s|http://dl-cdn.alpinelinux.org|${ALPINE_MIRROR}|g" /etc/apk/repositories && \
+    apk add --no-cache git
 
 # 复制go.mod和go.sum
 COPY go.mod go.sum ./

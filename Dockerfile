@@ -53,6 +53,7 @@ RUN pnpm run build
 # is a clean pure-Go cross-compile — no QEMU emulation of go mod download / go
 # build (emulated networking here was dropping module fetches with EOF).
 FROM --platform=${BUILDPLATFORM} ${GOLANG_IMAGE} AS backend-builder
+ARG ALPINE_MIRROR
 
 # Build arguments for version info (set by CI)
 ARG VERSION=
@@ -68,7 +69,8 @@ ENV GOPROXY=${GOPROXY}
 ENV GOSUMDB=${GOSUMDB}
 
 # Install build dependencies
-RUN apk add --no-cache git ca-certificates tzdata
+RUN sed -i "s|https://dl-cdn.alpinelinux.org|${ALPINE_MIRROR}|g; s|http://dl-cdn.alpinelinux.org|${ALPINE_MIRROR}|g" /etc/apk/repositories && \
+    apk add --no-cache git ca-certificates tzdata
 
 WORKDIR /app/backend
 
