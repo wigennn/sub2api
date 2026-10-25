@@ -362,6 +362,7 @@ export const useAppStore = defineStore('app', () => {
         oidc_oauth_provider_name: 'OIDC',
         github_oauth_enabled: false,
         google_oauth_enabled: false,
+        main_site_login_enabled: false,
         backend_mode_enabled: false,
         passkey_enabled: false,
         version: siteVersion.value,

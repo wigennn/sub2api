@@ -101,6 +101,25 @@ func TestSettingService_GetPublicSettings_ExposesCompactHomeEnabled(t *testing.T
 	require.False(t, missingSettings.CompactHomeEnabled)
 }
 
+func TestSettingService_GetPublicSettings_ExposesMainSiteLoginEnabled(t *testing.T) {
+	repo := &settingPublicRepoStub{values: map[string]string{}}
+	svc := NewSettingService(repo, &config.Config{
+		MainSite: config.MainSiteAuthConfig{
+			Enabled: true,
+			BaseURL: "https://main.example.com",
+		},
+	})
+
+	settings, err := svc.GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.True(t, settings.MainSiteLoginEnabled)
+
+	disabled, err := NewSettingService(repo, &config.Config{}).
+		GetPublicSettings(context.Background())
+	require.NoError(t, err)
+	require.False(t, disabled.MainSiteLoginEnabled)
+}
+
 func TestSettingService_ChannelMonitorHideThroughputDefaultsToPrivate(t *testing.T) {
 	missing := NewSettingService(&settingPublicRepoStub{values: map[string]string{}}, &config.Config{}).GetChannelMonitorRuntime(context.Background())
 	require.True(t, missing.HideThroughput)

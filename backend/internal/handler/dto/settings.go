@@ -414,6 +414,7 @@ type PublicSettings struct {
 	OIDCOAuthProviderName               string                   `json:"oidc_oauth_provider_name"`
 	GitHubOAuthEnabled                  bool                     `json:"github_oauth_enabled"`
 	GoogleOAuthEnabled                  bool                     `json:"google_oauth_enabled"`
+	MainSiteLoginEnabled                bool                     `json:"main_site_login_enabled"`
 	BackendModeEnabled                  bool                     `json:"backend_mode_enabled"`
 	PaymentEnabled                      bool                     `json:"payment_enabled"`
 	// PaymentBalanceDisabled mirrors the payment-config BALANCE_PAYMENT_DISABLED switch so the

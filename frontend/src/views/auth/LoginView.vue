@@ -140,6 +140,7 @@
         />
 
         <button
+          v-if="mainSiteLoginEnabled"
           type="button"
           class="btn btn-secondary w-full"
           :disabled="authActionDisabled || mainSiteLoading"
@@ -309,6 +310,7 @@ const oidcOAuthEnabled = ref<boolean>(false)
 const oidcOAuthProviderName = ref<string>('OIDC')
 const githubOAuthEnabled = ref<boolean>(false)
 const googleOAuthEnabled = ref<boolean>(false)
+const mainSiteLoginEnabled = ref<boolean>(false)
 const passwordResetEnabled = ref<boolean>(false)
 const passkeyEnabled = ref<boolean>(false)
 const loginAgreementEnabled = ref<boolean>(false)
@@ -421,12 +423,14 @@ onMounted(async () => {
     oidcOAuthProviderName.value = settings.oidc_oauth_provider_name || 'OIDC'
     githubOAuthEnabled.value = settings.github_oauth_enabled
     googleOAuthEnabled.value = settings.google_oauth_enabled
+    mainSiteLoginEnabled.value = settings.main_site_login_enabled === true
     backendModeEnabled.value = settings.backend_mode_enabled
     passwordResetEnabled.value = settings.password_reset_enabled
     passkeyEnabled.value = settings.passkey_enabled === true
     applyLoginAgreementSettings(settings)
   } catch (error) {
     console.error('Failed to load public settings:', error)
+    mainSiteLoginEnabled.value = appStore.cachedPublicSettings?.main_site_login_enabled === true
     loginAgreementEnabled.value = false
     agreementAccepted.value = true
   } finally {
