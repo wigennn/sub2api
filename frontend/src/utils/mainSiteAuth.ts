@@ -8,7 +8,12 @@ const TOTP_STORAGE_KEY = 'main_site_2fa'
 interface AuthStore {
   checkAuth(): void
   isAuthenticated: boolean
-  loginWithMainSite(accessToken?: string): Promise<LoginResponse>
+  loginWithMainSite(accessToken?: string, username?: string): Promise<LoginResponse>
+}
+
+interface MainSiteHandoff {
+  token: string
+  username: string
 }
 
 function trustedParentOrigins(): string[] {
@@ -26,16 +31,19 @@ function trustedParentOrigins(): string[] {
   return [...origins]
 }
 
-function consumeTokenFromURL(): string {
+function consumeHandoffFromURL(): MainSiteHandoff {
   const params = new URLSearchParams(window.location.search)
   const fragment = new URLSearchParams(window.location.hash.replace(/^#/, ''))
   const token = params.get('parent_token') || params.get('token') ||
     fragment.get('parent_token') || fragment.get('token')
+  const username = params.get('parent_username') || fragment.get('parent_username')
 
   params.delete('parent_token')
   params.delete('token')
+  params.delete('parent_username')
   fragment.delete('parent_token')
   fragment.delete('token')
+  fragment.delete('parent_username')
   const query = params.toString()
   const hash = fragment.toString()
   window.history.replaceState(
@@ -43,35 +51,41 @@ function consumeTokenFromURL(): string {
     '',
     `${window.location.pathname}${query ? `?${query}` : ''}${hash ? `#${hash}` : ''}`
   )
-  return token?.trim() || ''
+  return {
+    token: token?.trim() || '',
+    username: username?.trim() || ''
+  }
 }
 
 export function startMainSiteLogin(): void {
   window.location.assign(buildApiUrl('/auth/main-site/start'))
 }
 
-function waitForParentToken(timeoutMs: number): Promise<string> {
+function waitForParentToken(timeoutMs: number): Promise<MainSiteHandoff> {
   return new Promise((resolve) => {
     const origins = trustedParentOrigins()
     let settled = false
-    const finish = (token: string) => {
+    const finish = (handoff: MainSiteHandoff) => {
       if (settled) return
       settled = true
       window.removeEventListener('message', onMessage)
-      resolve(token)
+      resolve(handoff)
     }
     const onMessage = (event: MessageEvent) => {
       if (event.source !== window.parent) return
       if (origins.length && !origins.includes(event.origin)) return
       if (event.data?.type !== AUTH_MESSAGE_TYPE) return
       if (typeof event.data.token !== 'string' || !event.data.token.trim()) return
-      finish(event.data.token.trim())
+      finish({
+        token: event.data.token.trim(),
+        username: typeof event.data.username === 'string' ? event.data.username.trim() : ''
+      })
     }
 
     window.addEventListener('message', onMessage)
     const readyTarget = origins.length === 1 ? origins[0] : '*'
     window.parent.postMessage({ type: READY_MESSAGE_TYPE, app: 'sub2api' }, readyTarget)
-    window.setTimeout(() => finish(''), timeoutMs)
+    window.setTimeout(() => finish({ token: '', username: '' }), timeoutMs)
   })
 }
 
@@ -85,15 +99,15 @@ function persistTwoFactorChallenge(response: LoginResponse): void {
 
 export async function initMainSiteAuth(authStore: AuthStore): Promise<void> {
   authStore.checkAuth()
-  let token = consumeTokenFromURL()
-  if (!token && authStore.isAuthenticated) return
-  if (!token && window.self !== window.top) {
-    token = await waitForParentToken(2500)
+  let handoff = consumeHandoffFromURL()
+  if (!handoff.token && authStore.isAuthenticated) return
+  if (!handoff.token && window.self !== window.top) {
+    handoff = await waitForParentToken(2500)
   }
-  if (!token) return
+  if (!handoff.token) return
 
   try {
-    const response = await authStore.loginWithMainSite(token)
+    const response = await authStore.loginWithMainSite(handoff.token, handoff.username)
     persistTwoFactorChallenge(response)
   } catch (error) {
     console.warn('Main-site login exchange failed:', error)

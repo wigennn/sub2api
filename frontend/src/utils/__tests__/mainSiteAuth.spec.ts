@@ -25,10 +25,10 @@ describe('initMainSiteAuth', () => {
   beforeEach(() => {
     localStorage.clear()
     sessionStorage.clear()
-    window.history.replaceState({}, '', '/?foo=1&parent_token=main-site-token')
+    window.history.replaceState({}, '', '/?foo=1&parent_token=main-site-token&parent_username=main-user')
   })
 
-  it('exchanges parent_token and removes it from the URL', async () => {
+  it('exchanges parent_token with parent_username and removes both from the URL', async () => {
     const store = {
       isAuthenticated: false,
       checkAuth: vi.fn(),
@@ -37,12 +37,12 @@ describe('initMainSiteAuth', () => {
 
     await initMainSiteAuth(store as never)
 
-    expect(store.loginWithMainSite).toHaveBeenCalledWith('main-site-token')
+    expect(store.loginWithMainSite).toHaveBeenCalledWith('main-site-token', 'main-user')
     expect(window.location.search).toBe('?foo=1')
   })
 
-  it('exchanges a parent_token from the URL fragment without sending it to the server', async () => {
-    window.history.replaceState({}, '', '/#parent_token=fragment-token')
+  it('exchanges a fragment handoff without leaving the token in the URL', async () => {
+    window.history.replaceState({}, '', '/#parent_token=fragment-token&parent_username=fragment-user')
     const store = {
       isAuthenticated: false,
       checkAuth: vi.fn(),
@@ -51,7 +51,7 @@ describe('initMainSiteAuth', () => {
 
     await initMainSiteAuth(store as never)
 
-    expect(store.loginWithMainSite).toHaveBeenCalledWith('fragment-token')
+    expect(store.loginWithMainSite).toHaveBeenCalledWith('fragment-token', 'fragment-user')
     expect(window.location.hash).toBe('')
   })
 })

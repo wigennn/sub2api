@@ -267,9 +267,9 @@ export const useAuthStore = defineStore('auth', () => {
    * Login by exchanging an ai-basic main-site token (or the shared HttpOnly
    * main-site cookie when no token is supplied).
    */
-  async function loginWithMainSite(accessToken?: string): Promise<LoginResponse> {
+  async function loginWithMainSite(accessToken?: string, username?: string): Promise<LoginResponse> {
     try {
-      const response = await authAPI.exchangeMainSiteToken(accessToken)
+      const response = await authAPI.exchangeMainSiteToken(accessToken, username)
       if (isTotp2FARequired(response)) {
         return response
       }

@@ -19,6 +19,9 @@ const mainSiteUserInfoMaxBytes = 64 * 1024
 
 type mainSiteExchangeRequest struct {
 	AccessToken string `json:"access_token"`
+	// Username is untrusted handoff metadata. Identity mapping always uses the
+	// profile returned by the main-site user-info endpoint.
+	Username string `json:"username"`
 }
 
 type mainSiteUserInfo struct {

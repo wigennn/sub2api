@@ -61,3 +61,24 @@ func TestLoginOrRegisterMainSiteUserReusesBoundIdentity(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, first.ID, second.ID)
 }
+
+func TestLoginOrRegisterMainSiteUserSyncsUsernameForBoundIdentity(t *testing.T) {
+	svc, _, _ := newAuthServiceWithEnt(t, map[string]string{
+		service.SettingKeyRegistrationEnabled: "false",
+	}, nil)
+	ctx := context.Background()
+	input := service.MainSiteUserInput{
+		UserID:   3003,
+		Email:    "rename-user@example.com",
+		Username: "before-rename",
+	}
+
+	first, err := svc.LoginOrRegisterMainSiteUser(ctx, input)
+	require.NoError(t, err)
+
+	input.Username = "after-rename"
+	second, err := svc.LoginOrRegisterMainSiteUser(ctx, input)
+	require.NoError(t, err)
+	require.Equal(t, first.ID, second.ID)
+	require.Equal(t, "after-rename", second.Username)
+}

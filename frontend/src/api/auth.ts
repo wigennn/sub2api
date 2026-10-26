@@ -168,14 +168,19 @@ export async function login2FA(request: TotpLogin2FARequest): Promise<AuthRespon
 }
 
 /**
- * Exchange an ai-basic main-site token for a local sub2api session.
+ * Exchange an ai-basic main-site token and optional username hint for a local
+ * sub2api session. The backend resolves the authoritative profile from the
+ * token before mapping the local user.
  * When accessToken is omitted, the backend also accepts the shared main-site
  * HttpOnly cookie.
  */
-export async function exchangeMainSiteToken(accessToken?: string): Promise<LoginResponse> {
+export async function exchangeMainSiteToken(accessToken?: string, username?: string): Promise<LoginResponse> {
+  const payload: Record<string, string> = {}
+  if (accessToken) payload.access_token = accessToken
+  if (username) payload.username = username
   const { data } = await apiClient.post<LoginResponse>(
     '/auth/main-site/exchange',
-    accessToken ? { access_token: accessToken } : {}
+    payload
   )
 
   if (!isTotp2FARequired(data)) {
